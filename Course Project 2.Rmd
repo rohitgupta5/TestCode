@@ -1,0 +1,72 @@
+---
+title: Course Project 2 -- Exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database
+author: "Rohit Gupta"
+date: "May 7, 2017"
+output: html_document
+---
+
+Introduction
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+Processing Data ::
+
+```{r provision, echo=TRUE}
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(fileUrl, 'data.csv.bz2')
+Data <- read.csv("data.csv.bz2", stringsAsFactors = F)
+variables <- c("EVTYPE","FATALITIES","INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP")
+Storm <- Data[variables]
+head(Storm)
+```
+
+Transforming variables
+In this part, the variables EVTYPE, PROPDMGEXP and CROPDMGEXP are transformed to be more clear and certain. First of all, we rename of values from EVTYPE variable with the intention of doing more easy the reading of results.
+
+Also, We change de values from PROPDMGEXP and CROPDMGEXP because the raw data is in letters classification, and to do analysis at number level was necessary modify the answer at number level.
+
+```{r , echo=TRUE}
+library(plyr)
+Storm$EVTYPE <- mapvalues(Storm$EVTYPE, from = c("TSTM WIND", "THUNDERSTORM WINDS", "RIVER FLOOD", "HURRICANE/TYPHOON", "HURRICANE"), to = c("THUNDERSTORM WIND", "THUNDERSTORM WIND", "FLOOD", "HURRICANE-TYPHOON", "HURRICANE-TYPHOON"))
+
+Storm$PROPDMGEXP <- mapvalues(Storm$PROPDMGEXP, from = c("K", "M", "", "B", "m", "+", "0", "5", "6", "?","4","2","3","h","7","H","-","1","8"), to = c(10^3,10^6,1,10^9,10^6,1,1,10^5,10^6,1,10^4,10^2,10^3,10^3,10^7,10^2,1,1,10^8))
+
+Storm$CROPDMGEXP <- mapvalues(Storm$CROPDMGEXP, from = c("M", "K", "m", "B", "?", "0", "k", "2"), to = c(10^6,10^3,10^3,10^9,1,1,10^3,10^2))
+
+PROP <-  (as.numeric(Storm$PROPDMGEXP)) * Storm$PROPDMG
+CROP <-  (as.numeric(Storm$CROPDMGEXP)) * Storm$CROPDMG
+Storm$ECONDMG <-  PROP + CROP
+```
+
+#RESULTS
+##Health Damages: which types of events are most harmful to population health?
+
+```{r , echo=TRUE}
+library(dplyr)
+injuries.damages <- aggregate(INJURIES~EVTYPE, data = Storm, FUN = sum)
+fatalities.damages <- aggregate(FATALITIES~EVTYPE, data = Storm, FUN = sum)
+total.damages<- cbind(injuries.damages,FATALITIES=(fatalities.damages$FATALITIES))
+total.damages2 <- mutate(total.damages, TOTAL=INJURIES+FATALITIES)
+total.damages2 <- total.damages2[order(total.damages2$TOTAL, decreasing = TRUE),]
+library(knitr)
+kable(total.damages2[1:10,], caption="10 Principals weather events that are the most injuries and fatalities impact in population")
+
+
+```
+```{r , echo=TRUE}
+barplot(height = (total.damages2$TOTAL[1:10]/(1e3)), names.arg = total.damages2$EVTYPE[1:10],col=terrain.colors(10, alpha = 1), main = "Top 10 Injuries and Fatalities for US Weather Events", ylab = "Number of Injuries and Fatalities (thousands)", las = 2, cex.names= 0.6)
+
+economic.damage <- aggregate(ECONDMG~EVTYPE, data = Storm, FUN = sum)
+economic.damage <- economic.damage[order(economic.damage$ECONDMG, decreasing = TRUE),]
+kable(economic.damage[1:10,], caption="10 Principals weather events that are the most economically costly")
+
+barplot(height = (economic.damage$ECONDMG[1:10]/(1e9)), names.arg = economic.damage$EVTYPE[1:10],col=terrain.colors(10, alpha = 1), main = "Top 10 Economically Costly Events for US Weather Events", ylab = "Cost ($ billions)", las = 2, cex.names= 0.6)
+
+```
+
+###CONCLUSIONS
+Floods, hurricanes and tornado are the most economically costly. The tornado causes the most economic and social damage to communities.
+End
