@@ -1,0 +1,23 @@
+---
+title: "Statistical Inference Course Project - Simulation Exercise"
+author: "Rohit Gupta"
+date: "June 2, 2017"
+output: HTML_document
+---
+
+Overview
+This is part 1 of Coursera Statistical Inference course project. In this simulation exercise, the distribution of averages of 40 exponentials with a thousand simulations is investigated and the exponential distribution in R is compared with the Central Limit Theorem. With this simulation, the following things are shown:
+
+the sample mean and the theoretical mean
+the sample variance and the theoretical variance
+the distribution
+Requirements for this report:
+
+```{r setup, include=FALSE}
+library(knitr)
+library(ggplot2)
+# knitr settings
+knitr::opts_chunk$set(echo=TRUE, fig.path='part1/', fig.width=10, fig.height=6, cache=TRUE)
+# seed
+set.seed(12345)
+```

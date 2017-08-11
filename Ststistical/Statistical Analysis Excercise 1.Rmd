@@ -1,0 +1,94 @@
+---
+title: "Statistical Analysis Excercise 1"
+author: "Rohit Gupta"
+date: "June 2, 2017"
+output: html_document
+---
+##Overview
+This is part 1 of Coursera Statistical Inference course project. In this simulation exercise, the distribution of averages of 40 exponentials with a thousand simulations is investigated and the exponential distribution in R is compared with the Central Limit Theorem. With this simulation, the following things are shown:
+
+the sample mean and the theoretical mean
+the sample variance and the theoretical variance
+the distribution
+Requirements for this report:
+
+```{r }
+library(knitr)
+library(ggplot2)
+# knitr settings
+knitr::opts_chunk$set(echo=TRUE, fig.path='part1/', fig.width=10, fig.height=6, cache=TRUE)
+# seed
+set.seed(12345)
+```
+
+##Simulation
+The exponential distribution is simulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations.
+
+```{r }
+lambda <- 0.2
+sample_size <- 40 
+simulations <- 1000
+sim_matrix <- matrix(rexp(simulations*sample_size, rate=lambda), simulations, sample_size)
+```
+
+The simulation mean can now be plotted below to further explore.
+```{r }
+sim_mean <- rowMeans(sim_matrix)
+hist(sim_mean, xlab="mean of 40 exponentials", ylab="frequence", main="Histogram of the mean of 40 exponentials", col="green")
+```
+
+##Sample Mean vs. Theoretical Mean
+
+```{r }
+sample_mean <- mean(sim_mean)
+cat("sample mean: ", sample_mean)
+theoretical_mean <- 1/lambda
+cat("theoretical mean: ", theoretical_mean)
+```
+
+As shown, the sample mean is very close to the expected theoretical mean.
+
+##Sample Variance vs. Theoretical Variance
+
+```{r }
+sample_var <- var(sim_mean)
+cat("sample variance: ", sample_var)
+```
+
+```{r }
+theoretical_var <- (1/lambda)^2/sample_size  
+cat("theoretical variance: ", theoretical_var)
+```
+Again they are very close.
+
+##Distribution
+First, we create an approximate normal distribution and see how the sample aligns with it
+
+```{r }
+hist(sim_mean, density=20, breaks=20, prob=TRUE, xlab="mean of 40 exponentials", ylab="frequence", main="Histogram of the mean of 40 exponentials", col="grey")
+curve(dnorm(x, mean=sample_mean, sd=sqrt(sample_var)), col="black", lwd=2, lty = "dotted", add=TRUE, yaxt="n")
+curve(dnorm(x, mean=theoretical_mean, sd=sqrt(theoretical_var)), col="red", lwd=2, add=TRUE, yaxt="n")
+```
+The plot above shows the histogram can be approximated with the normal distribution.
+
+Second, we have proved that the mean and variance of sample data close to those of normal distribution. Below shows the confidence intervals:
+
+```{r }
+sample_conf_interval <- round (mean(sim_mean) + c(-1,1)*1.96*sd(sim_mean)/sqrt(sample_size),3)
+cat("sample confidence interval: ", sample_conf_interval)
+```
+
+```{r }
+theory_conf_interval <- theoretical_mean + c(-1,1)*1.96*sqrt(theoretical_var)/sqrt(sample_size);
+cat("theoretical confidence interval: ", theory_conf_interval)
+```
+
+Third, plot Q-Q for quantiles
+
+The sample quantiles also match closely with the theorietical quantiles.
+
+```{r }
+qqnorm(sim_mean, main="Normal Q-Q Plot", xlab="Theoretical Quantiles", ylab="Sample Quantiles")
+qqline(sim_mean, col="blue")
+```
+
