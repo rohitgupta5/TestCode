@@ -1,0 +1,65 @@
+---
+title: "Machine Learning 2"
+author: "Rohit Gupta"
+date: "August 2, 2017"
+output: html_document
+---
+
+```{r }
+TrainData<-read.csv("pml-training.csv", header=T, na.strings=c("NA", "#DIV/0!"))
+TestData<-read.csv("pml-testing.csv", header=T, na.string=c("NA", "#DIV/0!"))
+
+dim(TrainData)
+dim(TestData)
+
+head(TrainData)
+head(TestData)
+
+summary(TrainData)
+summary(TestData)
+
+str(TrainData)
+str(TestData)
+
+## before clean
+dim(TrainData)
+
+NoNATrainData<-TrainData[, apply(TrainData, 2, function(x) !any(is.na(x)))] 
+## after clean
+dim(NoNATrainData)
+
+## before clean
+dim(NoNATrainData)
+
+CleanTrainData<-NoNATrainData[,-c(1:8)]
+## after clean
+dim(CleanTrainData)
+
+## before clean
+dim(TestData)
+
+CleanTestData<-TestData[,names(CleanTrainData[,-52])]
+## after clean
+dim(CleanTestData)
+
+library(ggplot2)
+
+library(lattice)
+library(caret)
+
+inTrain<-createDataPartition(y=CleanTrainData$classe, p=0.60,list=F)
+train_set <- CleanTrainData[inTrain, ]
+test_set <- CleanTrainData[-inTrain, ]
+#Training and test set dimensions
+dim(train_set)
+
+dim(test_set)
+```
+
+```{r }
+library(randomForest)
+set.seed(13333)
+fitControl2<-trainControl(method="cv", number=5, allowParallel=T, verbose=T)
+rffit<-train(classe~.,data=train_set, method="rf", trControl=fitControl2, verbose=F)
+```
+
