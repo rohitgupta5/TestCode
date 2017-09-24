@@ -1,0 +1,28 @@
+---
+title: "R mark down and plotly assignment"
+author: "Rohit Gupta"
+date: "August 20, 2017"
+output: ioslides_presentation
+---
+
+## Summary car
+
+```{r cars, echo = TRUE}
+summary(cars)
+library(rlang)
+library(plotly)
+```
+## Scatter interactive  Plot
+
+
+
+```{r , echo = FALSE}
+
+p <- plot_ly(data = mtcars,
+             x = ~mpg, y = ~hp,type = "scatter", mode = "markers",
+             color = ~factor(cyl), colors = "Set1",
+             text = rownames(mtcars))
+
+p
+```
+

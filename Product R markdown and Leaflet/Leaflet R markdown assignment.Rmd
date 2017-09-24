@@ -1,0 +1,15 @@
+---
+title: "R-mark down and Leaflet"
+author: "Rohit Gupta"
+date: "August 15, 2017"
+output: html_document
+---
+
+
+
+```{r }
+library(leaflet)
+my_map <- leaflet() %>% addTiles() 
+my_map <- my_map %>% addMarkers(lat=25.2623, lng=82.9894, popup = "My carrier Builduing school")
+my_map
+```

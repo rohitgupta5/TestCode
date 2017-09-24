@@ -1,0 +1,23 @@
+---
+title: "R Markdown and Plotly"
+author: "Rohit Gupta"
+date: "August 15, 2017"
+output: html_document
+---
+
+
+## R Markdown
+
+
+
+```{r echo = FALSE}
+library(rlang)
+library(plotly)
+head(mtcars)
+p <- plot_ly(data = mtcars,
+             x = ~mpg, y = ~hp,
+             color = ~factor(cyl), colors = "Set1",
+             text = rownames(mtcars))
+
+p
+```
