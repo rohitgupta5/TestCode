@@ -1,0 +1,128 @@
+---
+title: "MileStone Project report"
+author: "Rohit Gupta"
+date: "October 19, 2017"
+output: html_document
+---
+
+## MileStone Report
+This project is an exercise in building a predictive model for text input, using a keyboard. The predictive model could be a combination of probabilistic models (N-grams, others), and rule-based models (which, in general, could also be modeled using probabilities). For various tasks of the keyboard, different models will be used. Since this document is just a milestone to check how the progress is going, I'll reserve the more detailed discussion for the final document.
+
+Due to the resourse constraint of my machine the analysis is performed with less amount of data.
+
+```{r echo = FALSE}
+# Load required Library
+library(stringi)
+library(tm)
+library(RWeka)
+library(ggplot2)
+
+#Read Data
+
+
+
+blogs <- readLines("final/en_US/en_US.blogs.txt", encoding = "UTF-8", skipNul = TRUE,n=100000)
+news <- readLines("final/en_US/en_US.news.txt", encoding = "UTF-8", skipNul = TRUE,n=100000)
+twitter <- readLines("final/en_US/en_US.twitter.txt", encoding = "UTF-8", skipNul = TRUE,n=100000)
+
+```
+
+#Basic Summary and data analysis
+##Line Count in Sample File
+```{r }
+length(blogs)
+length(news)
+length(twitter)
+```
+
+##Word Count in Sample File
+```{r }
+blogs.words <- stri_count_words(blogs)
+news.words <- stri_count_words(news)
+twitter.words <- stri_count_words(twitter)
+c(sum(blogs.words), sum(news.words))
+```
+
+## Descriptive stat of each document
+```{r }
+summary(nchar(blogs))
+summary(nchar(news))
+summary(nchar(twitter))
+```
+
+## Data Analysis
+```{r }
+# Data will be sampled
+
+set.seed(10000)
+sampleblogs <- sample(blogs, size = length(blogs)*0.001)
+samplenews <- sample(news, size = length(news)*0.005)
+#sampletwitter <- sample(twitter, size = length(twitter)*0.005)
+data.sample <- sample(paste(sampleblogs), size = 10000, replace = TRUE)
+
+# Generate corpus and clean the data
+
+corpus <- VCorpus(VectorSource(data.sample))
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+corpus <- tm_map(corpus, toSpace, "(f|ht)tp(s?)://(.*)[.][a-z]+")
+corpus <- tm_map(corpus, toSpace, "@[^\\s]+")
+corpus <- tm_map(corpus, tolower)
+corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, stripWhitespace)
+corpus <- tm_map(corpus, PlainTextDocument)
+```
+
+## Samplizing Data and Plot N-gram Frequency
+
+```{r }
+options(mc.cores=1)
+
+getFreq <- function(tdm) {
+  freq <- sort(rowSums(as.matrix(tdm)), decreasing = TRUE)
+  return(data.frame(word = names(freq), freq = freq))
+}
+bigram <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+trigram <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+makePlot <- function(data, label) {
+  ggplot(data[1:20,], aes(reorder(word, -freq), freq)) +
+         labs(x = label, y = "Frequency") +
+         theme(axis.text.x = element_text(angle = 60, size = 12, hjust = 1)) +
+         geom_bar(stat = "identity", fill = I("#FF6666"))
+}
+
+# Get frequencies of most common n-grams in data sample
+freq1 <- getFreq(removeSparseTerms(TermDocumentMatrix(corpus), 0.999))
+freq2 <- getFreq(removeSparseTerms(TermDocumentMatrix(corpus, control = list(tokenize = bigram)), 0.999))
+freq3 <- getFreq(removeSparseTerms(TermDocumentMatrix(corpus, control = list(tokenize = trigram)), 0.9999))
+
+```
+##Below is a histogram of the 20 most common unigrams in the data sample
+```{r }
+makePlot(freq1, "20 Most used Unigram")
+```
+##Below is a histogram of the 20 most common Bigrams in the data sample
+```{r }
+makePlot(freq2, "20 Most used Bigram")
+```
+##Below is a histogram of the 20 most common Trigrams in the data sample
+```{r }
+makePlot(freq3, "20 Most used Trigram")
+```
+
+##Below is the word matrix for Top 50 Unigrams
+```{r }
+library(wordcloud)
+set.seed(39)
+unidtm <- DocumentTermMatrix(corpus)
+tm_unifreq <- sort(colSums(as.matrix(unidtm)), decreasing=TRUE)
+wordcloud(names(tm_unifreq), tm_unifreq, max.words=50, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))
+```
+
+##Next Steps For Prediction Algorithm
+This concludes our exploratory analysis. The next steps of this capstone project would be to finalize our predictive algorithm, and deploy our algorithm as a Shiny app.
+
+Our predictive algorithm will be using n-gram model with frequency lookup similar to our exploratory analysis above. One possible strategy would be to use the trigram model to predict the next word. If no matching trigram can be found, then the algorithm would back off to the bigram model, and then to the unigram model if needed.
+
+The user interface of the Shiny app will consist of a text input box that will allow a user to enter a phrase. Then the app will use our algorithm to suggest the most likely next word after a short delay. Our plan is also to allow the user to configure how many words our app should suggest.
